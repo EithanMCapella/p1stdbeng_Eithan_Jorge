@@ -29,8 +29,8 @@ implementation files below are not provided — writing them is the
 assignment.
 
 ```
-part/PartSerializer.cpp
-part/PartCsv.cpp
+part/PartSerializer.cpp - Implemented
+part/PartCsv.cpp - Implemented
 part/PartGenerator.cpp
 policy/FIFOPolicy.cpp
 policy/LFUPolicy.cpp
