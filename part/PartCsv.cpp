@@ -3,6 +3,7 @@
 #include <charconv>
 #include <fstream>
 #include <sstream>
+#include <cmath>
 
 namespace bufman {
     namespace {
@@ -15,6 +16,17 @@ namespace bufman {
             const char* last = text.data() + text.size();
             const auto result = std::from_chars(first, last, value);
             return result.ec == std::errc{} && result.ptr == last;
+        }
+
+        bool parse_float(const std::string& text, float& value) {
+            if (text.empty()) {
+                return false;
+            }
+            const char* first = text.data();
+            const char* last = text.data() + text.size();
+            const auto result = std::from_chars(first, last, value);
+            return result.ec == std::errc{} && result.ptr == last && std::isfinite(value); // prevents inf or nan passing through
+            // pdf, invalid values must be rejected.
         }
 
         // Lots of validations
@@ -33,7 +45,7 @@ namespace bufman {
                 !std::getline(input, part_color_text, ',') ||
                 !std::getline(input, part_price_text, ',') ||
                 !std::getline(input, part_material, ',') ||
-                !std::getline(input, extra, ',')) {
+                std::getline(input, extra, ',')) {
                 error = "expected exactly six comma-separated fields";
                 return false;
             }
@@ -47,16 +59,16 @@ namespace bufman {
                 error = "part_id must be a positive integer";
                 return false;
             }
-            if (parse_integer(part_color_text, part_color) || part_color <= 0) {
+            if (!parse_integer(part_color_text, part_color) || part_color < 0 || part_color > 5) {
                 error = "part_color must be a nonnegative integer";
                 return false;
             }
-            if (parse_integer(part_price_text, part_price) || part_price <= 0) {
-                error = "part_price must be a nonnegative integer, prices must be positive";
+            if (!parse_float(part_price_text, part_price) || part_price < 0) {
+                error = "part_price must be a nonnegative float";
                 return false;
             }
-            if (parse_integer(part_weight_text, part_weight) || part_weight <= 0) {
-                error = "part_weight must be a nonnegative integer, a part cannot be weightless";
+            if (!parse_float(part_weight_text, part_weight) || part_weight < 0) {
+                error = "part_weight must be a nonnegative float";
                 return false;
             }
             if (part_name.size() > 9) {
@@ -84,13 +96,13 @@ namespace bufman {
         PartLoadResult result;
         std::ifstream input(path);
         if (!input) {
-            diagnostic << "cannot open CSV file: " << path << '\n';
+            diagnostics << "cannot open CSV file: " << path << '\n';
             result.skipped = 1;
             return result;
         }
 
         std::string line;
-        std:size_t line_number = 0;
+        std::size_t line_number = 0;
         while (std::getline(input, line)) {
             line_number++;
             if (line.empty()) {
@@ -99,7 +111,7 @@ namespace bufman {
                 continue;
             }
             Part part{};
-            std:string error;
+            std::string error;
             if (!parse_line(line, part, error)) {
                 ++result.skipped;
                 diagnostics << "line " << line_number << ": " << error << "\n";
