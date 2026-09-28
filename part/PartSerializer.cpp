@@ -31,21 +31,21 @@ namespace bufman {
         }
         part = Part{};
         std::size_t offset = 0;
-        std::memcpy(buffer + offset, &part.part_id, sizeof(part.part_id));
+        std::memcpy(&part.part_id, buffer + offset,sizeof(part.part_id));
         offset += sizeof(part.part_id);
-        std::memcpy(buffer + offset, &part.part_name, sizeof(part.part_name));
+        std::memcpy(&part.part_name, buffer + offset, sizeof(part.part_name));
         offset += sizeof(part.part_name);
-        std::memcpy(buffer + offset, &part.part_weight, sizeof(part.part_weight));
+        std::memcpy(&part.part_weight, buffer + offset, sizeof(part.part_weight));
         offset += sizeof(part.part_weight);
-        std::memcpy(buffer + offset, &part.part_color, sizeof(part.part_color));
+        std::memcpy(&part.part_color, buffer + offset, sizeof(part.part_color));
         offset += sizeof(part.part_color);
-        std::memcpy(buffer + offset, &part.part_price, sizeof(part.part_price));
+        std::memcpy(&part.part_price, buffer + offset, sizeof(part.part_price));
         offset += sizeof(part.part_price);
-        std::memcpy(buffer + offset, &part.part_material, sizeof(part.part_material));
+        std::memcpy(&part.part_material, buffer + offset, sizeof(part.part_material));
         return true;
     }
 
-    void initialize_part(char* block) {
+    void initialize_part_block(char* block) {
         assert(block != nullptr);
         std::memset(block, 0, kPartBlockSize);
     }
@@ -55,7 +55,7 @@ namespace bufman {
         initialize_part_block(block);
         const std::size_t count = std::min(parts.size(), kPartsPerBlock);
         for (std::size_t i = 0; i < count; ++i) {
-            serialize_part(parts[i], block + i * kPartBlockSize, kPartRecordSize);
+            serialize_part(parts[i], block + i * kPartRecordSize, kPartRecordSize);
         }
         return count;
     }
@@ -67,10 +67,10 @@ namespace bufman {
         }
         for (std::size_t i = 0; i < kPartsPerBlock; ++i) {
             Part part{};
-            if (!deserialize_part(block + i * kPartBlockSize, kPartRecordSize , part) || part.part_id == 0) {
+            if (!deserialize_part(block + i * kPartRecordSize, kPartRecordSize , part) || part.part_id == 0) {
                 break;
             }
-            people.push_back(part);
+            parts.push_back(part);
         }
         return parts;
     }
@@ -83,7 +83,7 @@ namespace bufman {
 
         for (std::size_t i = 0; i < kPartsPerBlock; ++i) {
             Part part{};
-            if (!deserialize_part(block + i * kPartBlockSize, kPartRecordSize , part) || part.part_id == 0) {
+            if (!deserialize_part(block + i * kPartRecordSize, kPartRecordSize , part) || part.part_id == 0) {
                 return i;
             }
         }
@@ -96,7 +96,7 @@ namespace bufman {
         }
         for (std::size_t i = 0; i < kPartsPerBlock; ++i) {
             Part part{};
-            if (!deserialize_part(block + i * kPartBlockSize, kPartRecordSize , part) || part.part_id == 0) {
+            if (!deserialize_part(block + i * kPartRecordSize, kPartRecordSize , part) || part.part_id == 0) {
                 return i;
             }
         }
@@ -107,17 +107,17 @@ namespace bufman {
         if (block == nullptr || slot >= kPartsPerBlock) {
             return false;
         }
-        if (!deserialize_part(block + slot * kPartRecordSize, kPartRecordSize , part) || part.part_id == 0) {
+        if (!deserialize_part(block + slot * kPartRecordSize, kPartRecordSize , part)) {
             return false;
         }
-        return part.part_name != 0;
+        return part.part_id != 0;
     }
 
     bool put_part_record(char* block, std::size_t slot, const Part& part) {
         if (block == nullptr || slot >= kPartsPerBlock || part.part_id == 0) {
             return false;
         }
-        serialize_part(part, block + slot * kPartBlockSize, kPartRecordSize);
+        serialize_part(part, block + slot * kPartRecordSize, kPartRecordSize);
         return true;
     }
 
