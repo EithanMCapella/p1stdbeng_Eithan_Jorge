@@ -31,8 +31,8 @@ assignment.
 ```
 part/PartSerializer.cpp - Implemented
 part/PartCsv.cpp - Implemented
-part/PartGenerator.cpp
-policy/FIFOPolicy.cpp
+part/PartGenerator.cpp - Implemented
+policy/FIFOPolicy.cpp - Implemented
 policy/LFUPolicy.cpp
 policy/LRUv2Policy.cpp
 policy/MRUPolicy.cpp
