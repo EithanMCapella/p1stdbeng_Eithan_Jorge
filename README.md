@@ -35,7 +35,7 @@ part/PartGenerator.cpp - Implemented
 policy/FIFOPolicy.cpp - Implemented
 policy/LFUPolicy.cpp
 policy/LRUv2Policy.cpp
-policy/MRUPolicy.cpp
+policy/MRUPolicy.cpp - Implemented
 ```
 
 Until each of these files exists, CMake stops at configure time with an
