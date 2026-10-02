@@ -33,9 +33,9 @@ part/PartSerializer.cpp - Implemented
 part/PartCsv.cpp - Implemented
 part/PartGenerator.cpp - Implemented
 policy/FIFOPolicy.cpp - Implemented
-policy/LFUPolicy.cpp
-policy/LRUv2Policy.cpp
-policy/MRUPolicy.cpp - Implemented
+policy/LFUPolicy.cpp - Implemented
+policy/LRUv2Policy.cpp - Implemented
+policy/MRUPolicy.cpp - Implemented - Implemented
 ```
 
 Until each of these files exists, CMake stops at configure time with an
