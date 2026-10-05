@@ -1,0 +1,74 @@
+# sessions.txt — three scripted sessions for build/p1dbeng_demo
+#
+# Each session is exactly 10 instructions; `quit` is instruction 10 of each.
+# Lines starting with '#' are comments: the REPL would reject them, so strip
+# them when piping (examples below) or type the commands interactively.
+#
+#   # Session 1 — CSV load + read/seek/scan basics (lines 30-39)
+#   rm -f people1.bin
+#   sed -n '30,39p' sessions.txt | build/p1dbeng_demo
+#
+#   # Session 2 — bulk load + session-long pool cache (lines 47-56)
+#   rm -f bulk1.bin
+#   sed -n '47,56p' sessions.txt | build/p1dbeng_demo
+#
+#   # Session 3 — parts + LRU eviction, 11 blocks vs 10 frames (lines 65-74)
+#   rm -f parts1.bin
+#   sed -n '65,74p' sessions.txt | build/p1dbeng_demo
+#
+# Prerequisites: build first (cmake -S . -B build && cmake --build build) and
+# run from the repo root so conf.json (policy lru, pool_size 10) and
+# sample2.csv are found. Delete people1.bin / bulk1.bin / parts1.bin before a
+# rerun for identical output. Only `seek` prints the (pool hit) marker —
+# `read` and `scan` hit the pool silently.
+
+# ---------------------------------------------------------------------------
+# Session 1 — person: load from CSV, then read / seek / scan basics.
+# 100 rows -> one block (195-record capacity). Includes one deliberate
+# beyond-EOF seek to show errors never kill the session.
+# ---------------------------------------------------------------------------
+append person sample2.csv people1.bin
+scan person people1.bin
+read person people1.bin 0
+seek person people1.bin 0 0
+seek person people1.bin 5
+scan person people1.bin
+read person people1.bin 0
+seek person people1.bin 0 0 0
+scan person people1.bin
+quit
+
+# ---------------------------------------------------------------------------
+# Session 2 — person: bulk load, then work the pool across commands.
+# 600 records -> 4 blocks; append/bulk leave pages resident (clean), so the
+# first seek series is already all pool hits. A second bulk grows the file
+# to 5 blocks (pids 601-800) and the new page is immediately a hit too.
+# ---------------------------------------------------------------------------
+bulk person 600 bulk1.bin
+seek person bulk1.bin 0 1 2 3
+seek person bulk1.bin 3 2 1 0
+read person bulk1.bin 2
+bulk person 200 bulk1.bin
+seek person bulk1.bin 4 0
+scan person bulk1.bin
+seek person bulk1.bin 4 4
+read person bulk1.bin 0
+quit
+
+# ---------------------------------------------------------------------------
+# Session 3 — part: bulk load past the pool, watch LRU evict.
+# 1200 records -> 11 blocks but only 10 frames. The scan forces the first
+# eviction (block 0); re-seeking block 0 loads it back and evicts block 1,
+# so the very next seek misses again — the classic LRU thrash. Closes with
+# a beyond-EOF seek and a full rescan of mixed hits and misses.
+# ---------------------------------------------------------------------------
+bulk part 1200 parts1.bin
+seek part parts1.bin 0 1
+scan part parts1.bin
+seek part parts1.bin 0
+seek part parts1.bin 1
+seek part parts1.bin 10 9
+seek part parts1.bin 20
+read part parts1.bin 7
+scan part parts1.bin
+quit

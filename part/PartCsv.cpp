@@ -104,6 +104,9 @@ namespace bufman {
         std::string line;
         std::size_t line_number = 0;
         while (std::getline(input, line)) {
+            if (!line.empty() && line.back() == '\r') {
+                line.pop_back();
+            }
             line_number++;
             if (line.empty()) {
                 ++result.skipped;
@@ -123,3 +126,18 @@ namespace bufman {
     }
 
 }
+
+/* Test Cases Notes:
+ *      Noticed empty names are allowed but empty materials are rejected,
+ * it also occurs in person, so this is fine.
+ *
+ *      Similarly in the design or person and part trailing commas are allowed
+ * Not necessarily an issue since if all 6 fields are valid it becomes
+ * a valid part and its serialized. So the 7th field is discarded.
+ *
+ *      Now on windows systems, my testing environment creates trailing \r\n
+ * at line endings, this means that any of the char fields could potentially get
+ * these trails included i.e steel\r\n
+ *
+ *
+ */
